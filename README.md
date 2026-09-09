@@ -8,7 +8,7 @@ Controle financeiro da CDL Marília, em **React + Vite + Supabase**.
 |---|---|
 | Dashboard | KPIs do período, despesas por categoria, série dos últimos 12 meses, filtro por conta |
 | Importar extrato | CSV/XLSX com as colunas Data, Conta, Descrição, Valor, Tipo e Categoria · **revisão antes de gravar**, criação automática de categorias novas, reversão do lote |
-| Transações | Filtros e paginação **no banco**, edição, exclusão, exportação XLSX/CSV do resultado filtrado |
+| Transações | Filtros e paginação **no banco**, edição, exclusão, **anexo do comprovante fiscal**, exportação XLSX/CSV do resultado filtrado |
 | Relatórios | Receitas × despesas por categoria, saldo acumulado, exportação CSV e impressão em PDF |
 | Categorias | CRUD + **regras de categorização editáveis** (sem mexer no código) |
 | Contas | Saldo das 3 contas, saldo consolidado e gestão de papéis dos usuários |
@@ -27,9 +27,11 @@ Controle financeiro da CDL Marília, em **React + Vite + Supabase**.
    - `supabase/migrations/0002_rls.sql`
    - `supabase/migrations/0003_functions.sql`
    - `supabase/migrations/0004_seed.sql`
+   - `supabase/migrations/0005_comprovantes.sql`
 
 O seed já cria as contas **Cresol**, **Mercado Pago** e **Cora** e as regras de
-categorização equivalentes às do sistema atual.
+categorização equivalentes às do sistema atual. O `0005` cria o bucket
+`comprovantes`, onde ficam os anexos das transações.
 
 ### 2. Criar os acessos (e-mail e senha)
 
@@ -104,6 +106,24 @@ comuns e não são tratados como erro. Se uma importação sair errada, o histó
 reverter o lote inteiro.
 
 ---
+
+## Comprovante fiscal
+
+Cada transação aceita **um** anexo — nota, recibo ou comprovante de PIX — em
+PDF, JPG, PNG ou WEBP, até 10 MB. O botão fica no formulário da tela
+**Transações**, e as linhas que têm anexo mostram um clipe ao lado da
+descrição, que abre o arquivo.
+
+O bucket é **privado**: o arquivo nunca fica acessível por URL fixa. Ao clicar
+para abrir, o sistema gera um link assinado válido por um minuto. Quem tem
+papel `leitura` consegue abrir os comprovantes, mas só `admin` e `lancador`
+conseguem anexar.
+
+O sistema **nunca apaga** arquivo do bucket. Remover o anexo de uma transação
+desfaz só o vínculo, e excluir a transação também não apaga o arquivo — é o
+que mantém o *desfazer* da tela Logs funcionando e preserva o documento
+fiscal. A limpeza de arquivos soltos, se um dia for necessária, é manual pelo
+painel do Supabase (**Storage → comprovantes**).
 
 ## Papéis de acesso
 
