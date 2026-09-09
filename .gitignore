@@ -3,7 +3,6 @@ dist
 .env
 .env.local
 *.log
-data/
 
 # arquivos de build e ambiente
 .vite
