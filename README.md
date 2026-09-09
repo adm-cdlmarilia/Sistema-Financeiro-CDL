@@ -1,6 +1,6 @@
 # Financeiro CDL Marília
 
-Reconstrução do sistema que hoje roda no Base44, em **React + Vite + Supabase**.
+Controle financeiro da CDL Marília, em **React + Vite + Supabase**.
 
 ## O que já está pronto
 
@@ -65,26 +65,7 @@ As chaves estão em Supabase → **Settings → API Keys** (a *publishable key*,
 com `sb_publishable_`, ou a *anon public* legada) e a URL em **Settings → General →
 Project URL**. O botão **Connect** no topo do painel mostra as duas juntas.
 
-### 4. Migrar os dados do Base44
-
-1. Abra o app antigo logado, pressione F12 → Console e rode:
-   ```js
-   localStorage.getItem('base44_access_token')
-   ```
-2. Cole o valor em `BASE44_TOKEN` no `.env`, junto com
-   `SUPABASE_SERVICE_ROLE_KEY` (Settings → API Keys → *secret key* `sb_secret_...`,
-   ou a `service_role` legada). Essa chave ignora o RLS: use só na sua máquina.
-3. Rode:
-   ```bash
-   npm run migrate
-   ```
-
-O script exporta tudo (transações, categorias e logs), salva uma cópia em
-`data/base44.json`, importa no Supabase **sem duplicar** e no final imprime uma
-tabela comparando receitas, despesas, saldo e contagem entre os dois sistemas.
-Só desligue o Base44 quando os números baterem.
-
-### 5. Publicar na Vercel
+### 4. Publicar na Vercel
 
 1. Suba o projeto para um repositório no GitHub.
 2. Vercel → **Add New Project** → importe o repositório.
@@ -156,5 +137,4 @@ src/
 ├── lib/          cliente Supabase, formatação pt-BR, parser de extratos
 └── pages/        as 7 telas
 supabase/migrations/   schema, RLS, funções e seed
-scripts/               migração Base44 → Supabase
 ```

@@ -1,6 +1,6 @@
 -- =====================================================================
 -- Seed: contas, categorias base e regras de categorização automática
--- (as demais categorias entram pelo script de migração do Base44)
+-- (novas categorias são criadas ao importar extratos ou pela tela Categorias)
 -- =====================================================================
 
 insert into accounts (name, bank, opening_balance, color) values
