@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Download, Plus, Pencil, Trash2, Search, ChevronLeft, ChevronRight, X, Tag, Wallet,
+  Paperclip, FileText, Upload,
 } from 'lucide-react'
 import { supabase, Transaction, Category, Account } from '@/lib/supabase'
 import { brl, dateBR } from '@/lib/format'
 import { exportTransactions } from '@/lib/parseStatement'
+import { ACCEPT, abrirComprovante, enviarComprovante } from '@/lib/comprovante'
 import { useAuth } from '@/hooks/useAuth'
 import {
   Button, Card, CardHeader, Input, Select, Field, Badge, Modal, EmptyState, Skeleton,
@@ -33,6 +35,8 @@ export default function Transactions() {
   const [page, setPage] = useState(0)
   const [editing, setEditing] = useState<Partial<Transaction> | null>(null)
   const [busy, setBusy] = useState(false)
+  const [enviandoAnexo, setEnviandoAnexo] = useState(false)
+  const anexoRef = useRef<HTMLInputElement>(null)
 
   // seleção múltipla
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -107,6 +111,7 @@ export default function Transactions() {
         category_id: tx.category_id || null,
         account_id: tx.account_id || null,
         notes: tx.notes || null,
+        attachment_url: tx.attachment_url || null,
       }
       if (tx.id) {
         const { data: before } = await supabase.from('transactions').select('*').eq('id', tx.id).single()
@@ -222,6 +227,28 @@ export default function Transactions() {
       setBusy(false)
     }
   }
+
+  /**
+   * O arquivo sobe na hora de escolher, mas só passa a valer quando a
+   * transação é salva. Nada é apagado do bucket pelo sistema: como Logs
+   * permite desfazer edições e exclusões, um comprovante removido aqui
+   * continua guardado, e é sempre o registro fiscal que prevalece.
+   */
+  const anexar = async (file: File | undefined) => {
+    if (!file) return
+    setEnviandoAnexo(true)
+    try {
+      const path = await enviarComprovante(file)
+      setEditing((t) => ({ ...t!, attachment_url: path }))
+    } catch (e: any) {
+      alert(e.message)
+    } finally {
+      setEnviandoAnexo(false)
+      if (anexoRef.current) anexoRef.current.value = ''
+    }
+  }
+
+  const verComprovante = (path: string) => abrirComprovante(path).catch((e: any) => alert(e.message))
 
   const total = data?.count ?? 0
   const lastPage = Math.max(0, Math.ceil(total / PAGE_SIZE) - 1)
@@ -409,7 +436,22 @@ export default function Transactions() {
                       </td>
                     )}
                     <td className="tabnum whitespace-nowrap pl-2 pr-4 py-3 text-ink-soft">{dateBR(t.date)}</td>
-                    <td className="truncate px-2 py-3" title={t.description}>{t.description}</td>
+                    <td className="px-2 py-3">
+                      <div className="flex items-center gap-1.5">
+                        {t.attachment_url && (
+                          <button
+                            type="button"
+                            className="shrink-0 text-ink-muted transition-colors hover:text-brand-600"
+                            title="Ver comprovante fiscal"
+                            aria-label={`Ver comprovante de ${t.description}`}
+                            onClick={() => verComprovante(t.attachment_url!)}
+                          >
+                            <Paperclip className="h-4 w-4" />
+                          </button>
+                        )}
+                        <span className="truncate" title={t.description}>{t.description}</span>
+                      </div>
+                    </td>
                     <td className={`tabnum whitespace-nowrap px-2 py-3 text-right font-medium ${t.type === 'receita' ? 'text-brand-600' : 'text-negative'}`}>
                       {t.type === 'receita' ? '+' : '−'} {brl(t.amount)}
                     </td>
@@ -516,6 +558,48 @@ export default function Transactions() {
           <Field label="Observações">
             <Input value={editing?.notes ?? ''} onChange={(e) => setEditing((t) => ({ ...t!, notes: e.target.value }))} />
           </Field>
+
+          {/* Não usa <Field> porque ele envolve tudo num <label>, e aí clicar
+              em "Remover" abriria o seletor de arquivos junto. */}
+          <div>
+            <span className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-ink-muted">
+              Comprovante fiscal
+            </span>
+
+            {editing?.attachment_url ? (
+              <div className="flex items-center gap-2 rounded-lg border border-line bg-surface-page px-3 py-2">
+                <FileText className="h-4 w-4 shrink-0 text-ink-muted" />
+                <button
+                  type="button"
+                  className="truncate text-sm font-medium text-brand-600 hover:underline"
+                  onClick={() => verComprovante(editing.attachment_url!)}
+                >
+                  Ver comprovante
+                </button>
+                <Button
+                  type="button" size="sm" variant="ghost" className="ml-auto"
+                  onClick={() => setEditing((t) => ({ ...t!, attachment_url: null }))}
+                >
+                  <X className="h-4 w-4" /> Remover
+                </Button>
+              </div>
+            ) : (
+              <>
+                <input
+                  ref={anexoRef} type="file" accept={ACCEPT} className="hidden"
+                  onChange={(e) => anexar(e.target.files?.[0])}
+                />
+                <Button type="button" disabled={enviandoAnexo} onClick={() => anexoRef.current?.click()}>
+                  <Upload className="h-4 w-4" />
+                  {enviandoAnexo ? 'Enviando...' : 'Anexar arquivo'}
+                </Button>
+              </>
+            )}
+
+            <span className="mt-1 block text-xs text-ink-muted">
+              PDF, JPG, PNG ou WEBP, até 10 MB. O anexo passa a valer ao salvar a transação.
+            </span>
+          </div>
 
           <div className="flex items-center gap-2 border-t border-line pt-4">
             {editing?.id && (
