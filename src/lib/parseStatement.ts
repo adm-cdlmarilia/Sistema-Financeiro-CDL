@@ -178,29 +178,123 @@ function buildRows(matrix: any[][]): { rows: ParsedRow[]; skipped: number; heade
   return { rows, skipped, headers }
 }
 
-export async function parseStatementFile(file: File): Promise<ParseResult> {
-  const fileHash = await hashFile(file)
+/** Lê o arquivo como matriz de células, sem interpretar coluna nenhuma. */
+async function readMatrix(file: File): Promise<any[][]> {
   const name = file.name.toLowerCase()
 
   if (name.endsWith('.csv') || name.endsWith('.txt')) {
     const text = await file.text()
     const delimiter = (text.split('\n')[0] ?? '').includes(';') ? ';' : ','
     const parsed = Papa.parse<string[]>(text.trim(), { delimiter, skipEmptyLines: true })
-    const matrix = (parsed.data as any[][]).map((r) =>
+    return (parsed.data as any[][]).map((r) =>
       r.map((c) => String(c ?? '').replace(/^["']|["']$/g, '').trim()),
     )
-    return { ...buildRows(matrix), fileHash }
   }
 
   if (name.endsWith('.xlsx') || name.endsWith('.xls')) {
     const buf = await file.arrayBuffer()
     const wb = XLSX.read(new Uint8Array(buf), { type: 'array', cellDates: true })
     const sheet = wb.Sheets[wb.SheetNames[0]]
-    const matrix = XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1, defval: '', raw: true })
-    return { ...buildRows(matrix), fileHash }
+    return XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1, defval: '', raw: true })
   }
 
   throw new Error('Formato não suportado. Envie um arquivo CSV ou XLSX.')
+}
+
+export async function parseStatementFile(file: File): Promise<ParseResult> {
+  const fileHash = await hashFile(file)
+  const matrix = await readMatrix(file)
+  return { ...buildRows(matrix), fileHash }
+}
+
+// ---------------------------------------------------------------- extrato bruto
+
+export interface RawRow {
+  date: string
+  description: string
+  amount: number // absoluto
+  rawAmount: number // com sinal
+  type: 'receita' | 'despesa'
+}
+
+export interface RawParseResult {
+  rows: RawRow[]
+  skipped: number
+  headers: string[]
+}
+
+/**
+ * Acha a coluna de valor de um extrato de banco. Primeiro tenta uma coluna
+ * única ("Valor"); se não houver, aceita o formato de duas colunas, com
+ * crédito e débito separados, comum nos extratos de conta corrente.
+ */
+function findAmountColumns(headers: string[], used: Set<number>) {
+  const generic = findColumn(headers, ['valor', 'amount', 'montante', 'quantia'], used, ['saldo'])
+  if (generic !== -1) return { generic, credito: -1, debito: -1 }
+
+  const credito = findColumn(headers, ['credito', 'crédito', 'entrada'], used, ['saldo'])
+  const debito = findColumn(headers, ['debito', 'débito', 'saida', 'saída'], used, ['saldo'])
+  return { generic: -1, credito, debito }
+}
+
+/**
+ * Leitura tolerante, para o extrato baixado direto do banco.
+ *
+ * Diferente de parseStatementFile, exige só data, descrição e valor: a
+ * conta vem da tela (o extrato é de um banco só) e a categoria é deixada
+ * em branco para as regras automáticas resolverem na importação.
+ */
+export async function parseRawStatement(file: File): Promise<RawParseResult> {
+  const matrix = await readMatrix(file)
+  if (!matrix.length) throw new Error('Arquivo vazio.')
+
+  const headers = (matrix[0] ?? []).map((h) => String(h ?? ''))
+  const used = new Set<number>()
+  const iDate = findColumn(headers, HINTS.data, used)
+  const iType = findColumn(headers, HINTS.tipo, used)
+  const { generic, credito, debito } = findAmountColumns(headers, used)
+  const iDesc = findColumn(headers, HINTS.descricao, used)
+
+  const missing: string[] = []
+  if (iDate === -1) missing.push('Data')
+  if (iDesc === -1) missing.push('Descrição ou Histórico')
+  if (generic === -1 && credito === -1 && debito === -1) missing.push('Valor')
+
+  if (missing.length) {
+    throw new Error(
+      `Faltam as colunas: ${missing.join(', ')}.\n\n` +
+        `Cabeçalhos lidos: ${headers.filter(Boolean).join(', ') || '(nenhum)'}`,
+    )
+  }
+
+  const rows: RawRow[] = []
+  let skipped = 0
+
+  for (let i = 1; i < matrix.length; i++) {
+    const cells = matrix[i] ?? []
+    if (!cells.length || cells.every((c) => String(c ?? '').trim() === '')) continue
+
+    const date = parseDate(cells[iDate])
+    const description = String(cells[iDesc] ?? '').trim()
+
+    const rawAmount = generic !== -1
+      ? parseAmount(cells[generic])
+      : Math.abs(parseAmount(credito === -1 ? 0 : cells[credito])) -
+        Math.abs(parseAmount(debito === -1 ? 0 : cells[debito]))
+
+    if (!date || !description || rawAmount === 0) { skipped++; continue }
+
+    rows.push({
+      date,
+      description,
+      amount: Math.abs(rawAmount),
+      rawAmount,
+      type: iType === -1 ? (rawAmount >= 0 ? 'receita' : 'despesa') : parseType(cells[iType], rawAmount),
+    })
+  }
+
+  if (!rows.length) throw new Error('Nenhuma transação válida encontrada no arquivo.')
+  return { rows, skipped, headers }
 }
 
 /** Compara nomes ignorando maiúsculas, acentos e espaços sobrando. */

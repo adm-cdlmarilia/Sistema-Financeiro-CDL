@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth'
 // cada página carrega sob demanda — o primeiro acesso não baixa o app inteiro
 const Dashboard = lazy(() => import('@/pages/Dashboard'))
 const Transactions = lazy(() => import('@/pages/Transactions'))
+const Prepare = lazy(() => import('@/pages/Prepare'))
 const Import = lazy(() => import('@/pages/Import'))
 const Reports = lazy(() => import('@/pages/Reports'))
 const Categories = lazy(() => import('@/pages/Categories'))
@@ -43,6 +44,7 @@ export default function App() {
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<Dashboard />} />
+          <Route path="/preparar" element={<Prepare />} />
           <Route path="/importar" element={<Import />} />
           <Route path="/transacoes" element={<Transactions />} />
           <Route path="/relatorios" element={<Reports />} />
