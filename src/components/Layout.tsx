@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import {
-  BarChart3, Upload, Receipt, FileText, Tag, History, LogOut, Menu, Wallet,
+  BarChart3, Upload, Receipt, FileText, Tag, History, LogOut, Menu, Wallet, FileStack,
 } from 'lucide-react'
 import { useState } from 'react'
 import clsx from 'clsx'
@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth'
 
 const nav = [
   { to: '/', label: 'Dashboard', icon: BarChart3, end: true },
+  { to: '/preparar', label: 'Preparação de arquivo', icon: FileStack },
   { to: '/importar', label: 'Importar extrato', icon: Upload },
   { to: '/transacoes', label: 'Transações', icon: Receipt },
   { to: '/relatorios', label: 'Relatórios', icon: FileText },

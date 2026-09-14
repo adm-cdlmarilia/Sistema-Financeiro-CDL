@@ -7,6 +7,7 @@ Controle financeiro da CDL Marília, em **React + Vite + Supabase**.
 | Tela | O que faz |
 |---|---|
 | Dashboard | KPIs do período, despesas por categoria, série dos últimos 12 meses, filtro por conta |
+| Preparação de arquivo | Junta os extratos das 3 contas num arquivo só, **remove as transferências entre elas** e entrega nas colunas que o importador espera |
 | Importar extrato | CSV/XLSX com as colunas Data, Conta, Descrição, Valor, Tipo e Categoria · **revisão antes de gravar**, criação automática de categorias novas, reversão do lote |
 | Transações | Filtros e paginação **no banco**, edição, exclusão, **anexo do comprovante fiscal**, exportação XLSX/CSV do resultado filtrado |
 | Relatórios | Receitas × despesas por categoria, saldo acumulado, exportação CSV e impressão em PDF |
@@ -79,6 +80,37 @@ Project URL**. O botão **Connect** no topo do painel mostra as duas juntas.
 O `vercel.json` já trata as rotas do SPA.
 
 ---
+
+## Preparação de arquivo
+
+O extrato que o banco entrega não serve direto para a tela **Importar extrato**:
+ele não tem as colunas Conta, Tipo e Categoria, e cada banco nomeia as suas do
+seu jeito. A tela **Preparação de arquivo** resolve isso.
+
+O fluxo é: envie um extrato por conta (CSV ou XLSX, como vem do banco), confira
+as transferências que o sistema encontrou, e baixe o arquivo unificado — que aí
+sim entra na tela Importar extrato.
+
+Da leitura do extrato bruto, só três colunas são obrigatórias: **data**,
+**descrição** (ou histórico) e **valor**. A conta vem da tela, já que cada
+arquivo é de um banco só, e a categoria sai em branco para as regras
+automáticas resolverem na importação. Valor pode vir numa coluna única, com
+negativo para saída, ou em duas colunas separadas de débito e crédito.
+
+### Por que remover as transferências
+
+Um PIX de R$ 500 da Cresol para a Cora aparece **duas vezes**: como saída num
+extrato e como entrada no outro. Nenhuma das duas é despesa ou receita — é o
+mesmo dinheiro mudando de lugar. Se as duas entrassem, o mês fecharia com
+R$ 500 a mais de receita e R$ 500 a mais de despesa.
+
+O pareamento exige valor igual, contas diferentes, sentidos opostos e datas
+próximas. A tolerância padrão é de **3 dias**, porque TED e PIX entre bancos
+nem sempre compensam no mesmo dia, e é ajustável na tela. Cada linha só pode
+parear uma vez, e entre candidatos empatados vence o de data mais próxima.
+
+Nada é removido às escondidas: a tela lista as transferências encontradas e a
+revisão final permite marcar ou desmarcar qualquer linha antes de baixar.
 
 ## Formato do arquivo de importação
 
