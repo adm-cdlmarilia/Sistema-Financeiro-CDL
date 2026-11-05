@@ -45,8 +45,11 @@ export function CategoryDonut({ data }: { data: { name: string; value: number }[
     : top
 
   return (
+    // min-w-0 nos dois filhos: sem isso a coluna do grid assume o min-content
+    // da legenda (o nome de categoria mais longo, que não quebra linha) e o
+    // card inteiro fica mais largo que a tela no celular.
     <div className="grid gap-6 lg:grid-cols-2">
-      <div className="h-64">
+      <div className="h-64 min-w-0">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -68,9 +71,9 @@ export function CategoryDonut({ data }: { data: { name: string; value: number }[
         </ResponsiveContainer>
       </div>
 
-      <ul className="space-y-2 self-center">
+      <ul className="min-w-0 space-y-2 self-center">
         {chartData.map((d, i) => (
-          <li key={d.name} className="flex items-center gap-3 text-sm">
+          <li key={d.name} className="flex items-center gap-2 text-sm sm:gap-3">
             <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: SERIES[i % SERIES.length] }} />
             <span className="min-w-0 flex-1 truncate text-ink-soft">{d.name}</span>
             <span className="tabnum shrink-0 text-ink-muted">{brl(d.value)}</span>
@@ -79,7 +82,7 @@ export function CategoryDonut({ data }: { data: { name: string; value: number }[
             </span>
           </li>
         ))}
-        <li className="flex items-center justify-between border-t border-line pt-2 text-sm font-semibold">
+        <li className="flex items-center justify-between gap-2 border-t border-line pt-2 text-sm font-semibold">
           <span>Total</span>
           <span className="tabnum">{brl(total)}</span>
         </li>

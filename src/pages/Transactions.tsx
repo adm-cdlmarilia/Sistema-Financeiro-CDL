@@ -398,8 +398,13 @@ export default function Transactions() {
         ) : !rows.length ? (
           <EmptyState title="Nenhuma transação encontrada" hint="Ajuste os filtros ou importe um extrato." />
         ) : (
-          <div>
-            <table className="w-full table-fixed text-sm">
+          <div className="overflow-x-auto">
+            {/* No celular as colunas fixas somavam mais que a tela e a descrição
+                era espremida a zero, colando nos cabeçalhos vizinhos. O min-w
+                faz a tabela rolar dentro do card em vez de espremer, e 540px é
+                o valor em que Data, Descrição e Valor ainda cabem na tela de um
+                celular — categoria e edição ficam a um deslize. */}
+            <table className="w-full min-w-[540px] table-fixed text-sm">
               <thead>
                 <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-ink-muted">
                   {canWrite && (
@@ -411,9 +416,9 @@ export default function Transactions() {
                       />
                     </th>
                   )}
-                  <th className="w-[100px] pl-2 pr-4 py-3 font-medium">Data</th>
+                  <th className="w-[92px] pl-2 pr-4 py-3 font-medium">Data</th>
                   <th className="px-2 py-3 font-medium">Descrição</th>
-                  <th className="w-[120px] px-2 py-3 text-right font-medium">Valor</th>
+                  <th className="w-[108px] px-2 py-3 text-right font-medium">Valor</th>
                   <th className="w-[150px] px-2 py-3 font-medium">Categoria</th>
                   <th className="hidden w-[110px] px-2 py-3 font-medium lg:table-cell">Conta</th>
                   <th className="hidden w-[90px] px-2 py-3 font-medium xl:table-cell">Tipo</th>

@@ -42,10 +42,16 @@ export default function Categories() {
 
   const addCategory = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from('categories').insert({ name: newName.trim(), kind: newKind })
+      const { data: criada, error } = await supabase
+        .from('categories')
+        .insert({ name: newName.trim(), kind: newKind })
+        .select('id')
+        .single()
       if (error) throw error
+      // entity_ids é o que permite desfazer a criação na tela de Logs
       await supabase.from('activity_logs').insert({
-        entity_type: 'Categoria', action_type: 'create', description: `Categoria criada: "${newName.trim()}"`,
+        entity_type: 'Categoria', entity_ids: [criada.id], action_type: 'create',
+        description: `Categoria criada: "${newName.trim()}"`,
       })
     },
     onSuccess: () => { setNewName(''); invalidate() },

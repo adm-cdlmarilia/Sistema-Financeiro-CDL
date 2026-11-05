@@ -29,10 +29,12 @@ Controle financeiro da CDL Marília, em **React + Vite + Supabase**.
    - `supabase/migrations/0003_functions.sql`
    - `supabase/migrations/0004_seed.sql`
    - `supabase/migrations/0005_comprovantes.sql`
+   - `supabase/migrations/0006_desfazer_por_entidade.sql`
 
 O seed já cria as contas **Cresol**, **Mercado Pago** e **Cora** e as regras de
 categorização equivalentes às do sistema atual. O `0005` cria o bucket
-`comprovantes`, onde ficam os anexos das transações.
+`comprovantes`, onde ficam os anexos das transações. O `0006` corrige o
+Desfazer da tela de Logs.
 
 ### 2. Criar os acessos (e-mail e senha)
 

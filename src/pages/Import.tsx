@@ -124,6 +124,10 @@ export default function Import() {
 
         await supabase.from('activity_logs').insert({
           entity_type: 'Categoria', action_type: 'bulk_create',
+          // só as recém-criadas: é o que a tela de Logs usa para desfazer
+          entity_ids: criadas
+            .filter((c) => nomesNovos.some((n) => sameName(n, c.name)))
+            .map((c) => c.id),
           description: `${nomesNovos.length} categoria(s) criada(s) pela importação`,
           details: nomesNovos.join(', ').slice(0, 500),
         })
