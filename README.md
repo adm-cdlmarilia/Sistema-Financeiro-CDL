@@ -29,10 +29,12 @@ Controle financeiro da CDL Marília, em **React + Vite + Supabase**.
    - `supabase/migrations/0003_functions.sql`
    - `supabase/migrations/0004_seed.sql`
    - `supabase/migrations/0005_comprovantes.sql`
+   - `supabase/migrations/0006_desfazer_por_entidade.sql`
 
 O seed já cria as contas **Cresol**, **Mercado Pago** e **Cora** e as regras de
 categorização equivalentes às do sistema atual. O `0005` cria o bucket
-`comprovantes`, onde ficam os anexos das transações.
+`comprovantes`, onde ficam os anexos das transações. O `0006` corrige o
+Desfazer da tela de Logs.
 
 ### 2. Criar os acessos (e-mail e senha)
 
@@ -53,7 +55,7 @@ O login é por **e-mail e senha** — não precisa de Google nem de nenhuma cont
 **Esqueci minha senha:** a tela de login tem o link, que envia um e-mail de redefinição.
 O serviço de e-mail padrão do Supabase é limitado a poucos envios por hora — para 2 usuários
 resolve, e a alternativa sempre disponível é o admin trocar a senha em
-*Authentication → Users → (usuário) → Reset password*. Quem está logado também troca a
+*Authentication → Users → (usuário) → Reset password*. Quem está logado também troca a﻿
 própria senha na tela **Contas**.
 
 ### 3. Rodar localmente
