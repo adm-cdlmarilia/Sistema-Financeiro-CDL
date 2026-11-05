@@ -242,7 +242,7 @@ export default function Categories() {
       <Modal open={!!rule} onClose={() => setRule(null)} title={rule?.id ? 'Editar regra' : 'Nova regra'}>
         <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); saveRule.mutate(rule!) }}>
           <Field label="Termo procurado na descrição">
-            <Input required value={rule?.pattern ?? ''} onChange={(e) => setRule((r) => ({ ...r!, pattern: e.target.value }))} placeholder='ex.: pix credito' />
+            <Input required value={rule?.pattern ?? ''} onChange={(e) => setRule((r) => ({ ...r!, pattern: e.target.value }))} placeholder="ex.: pix credito" />
           </Field>
           <Field label="Categoria aplicada">
             <Select required value={rule?.category_id ?? ''} onChange={(e) => setRule((r) => ({ ...r!, category_id: e.target.value }))}>

@@ -55,7 +55,7 @@ O login é por **e-mail e senha** — não precisa de Google nem de nenhuma cont
 **Esqueci minha senha:** a tela de login tem o link, que envia um e-mail de redefinição.
 O serviço de e-mail padrão do Supabase é limitado a poucos envios por hora — para 2 usuários
 resolve, e a alternativa sempre disponível é o admin trocar a senha em
-*Authentication → Users → (usuário) → Reset password*. Quem está logado também troca a﻿
+*Authentication → Users → (usuário) → Reset password*. Quem está logado também troca a
 própria senha na tela **Contas**.
 
 ### 3. Rodar localmente
